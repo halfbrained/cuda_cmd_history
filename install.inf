@@ -3,7 +3,7 @@ title=Commands History
 desc=Quick access to recently accessed menu and palette commands
 type=cudatext-plugin
 subdir=cuda_cmd_history
-homepage=(Fill the GitHub repo URL)
+homepage=https://github.com/halfbrained/cuda_cmd_history
 
 [item1]
 section=events
