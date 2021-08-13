@@ -30,6 +30,13 @@ def _cleanup(f):
         return result
     return p
 
+def unique(seq):
+    seen = set()
+    for item in seq:
+        if item not in seen:
+            seen.add( item )
+            yield item
+
 
 class Command:
 
@@ -125,7 +132,7 @@ class Command:
         if not cmds:
             return
 
-        new_cmds = []
+        new_cmds = False
         for cmd in reversed(cmds):
             cmd_id = cmd['code']
             if cmd_id == cmd_None  and  cmd['text'] == HISTORY_TAG:   # stop
@@ -145,15 +152,14 @@ class Command:
                 continue
 
             pass;       LOG and print(f'NOTE: added to history: {cmd_id, cmd}')
-            new_cmds.append(cmd_id)     # new on top
+            history.append(cmd_id)
+            new_cmds = True
         #end for
 
         if new_cmds:
-            _new_cmds_set = set(new_cmds)
-            for i,cmd_id in enumerate(history):     # remove duplicates of new items
-                if cmd_id in _new_cmds_set:
-                    del history[i]
-            history.extend(reversed(new_cmds))
+            history.reverse()
+            history[:] = unique(history)
+            history.reverse()
             del history[0:-self.opt_history_size]   # trim history
 
         ed_self.cmd(cmd_None, HISTORY_TAG)
