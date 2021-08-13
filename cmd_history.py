@@ -5,11 +5,7 @@ from cudax_lib import get_translation
 _   = get_translation(__file__)  # I18N
 
 
-#TODO undo
-LOG = True
-
-#TODO ignore comamnds set
-#TODO remove dupes
+LOG = False
 
 fn_config = os.path.join(app_path(APP_DIR_SETTINGS), 'plugins.ini')
 fn_history = os.path.join(app_path(APP_DIR_SETTINGS), 'cmd_history.txt')
