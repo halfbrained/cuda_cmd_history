@@ -24,7 +24,7 @@ history = [] # command codes  (new - last)
 
 def _cleanup(f):
     """ cleanups Command._all_commands after function call """
-    def p(self, *args, **vargs):
+    def p(self, *args, **vargs): #SKIP
         result = f(self, *args, **vargs)
         self._all_commands = None
         return result
@@ -102,14 +102,18 @@ class Command:
 
     @_cleanup
     def show_history(self):
+        def name_to_dlg_item(s): #SKIP
+            _spl = s.rsplit(':', 1)[::-1]
+            return '\t'.join( map(str.strip, _spl) )
+
         self._process_command_log(ed)
 
         if not history:     return
 
         hcmds = list(reversed(history))
         _cmd_names = filter(None, map(self._get_cmd_name, hcmds)) # get non-None names for history commands
-        # command name to left, command path (origin) - to right
-        _cmd_names = list('\t'.join(name.rsplit(':', 1)[::-1])  for name in _cmd_names)
+        # command name to left, command path (origin) - to right, + strip()
+        _cmd_names = list(name_to_dlg_item(name)  for name in _cmd_names)
         res = dlg_menu(DMENU_LIST, _cmd_names, caption=_('Commands history'))
         if res is not None:
             cmd_id = hcmds[res]
