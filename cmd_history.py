@@ -13,13 +13,16 @@ fn_history = os.path.join(app_path(APP_DIR_SETTINGS), 'cmd_history.txt')
 CFG_SECTION = "command_history"
 TIMER_DELAY = 30*1000   # ms -- 30 sec
 HISTORY_TAG = 'cmdhst'
+PINNED_PREFIX = 'pinned:'
 
-INVOKE_PALETTE = 'app_pal'
-INVOKE_MENU    = 'menu_main'
+INVOKE_PALETTE     = 'app_pal'
+INVOKE_MENU        = 'menu_main'
+INVOKE_MENU_API    = 'menu_api'
 
 cmd_None = 99   # cudatext_cmd.py
 
 history = [] # command codes  (new - last)
+pinned = []
 
 
 def _cleanup(f):
@@ -73,9 +76,17 @@ class Command:
         if os.path.isfile(fn_history):
             with open(fn_history, 'r') as f:
                 cmd_names = (name.rstrip() for name in f.readlines())
-            cmd_ids = filter(None, map(self._get_cmdid_by_name, cmd_names))
             history.clear()
-            history.extend(cmd_ids)
+            pinned.clear()
+            for name in cmd_names:
+                is_pinned = False
+                if name.startswith(PINNED_PREFIX):
+                    is_pinned = True
+                    name = name.replace(PINNED_PREFIX, '', 1)
+                cmd_id = self._get_cmdid_by_name(name)
+                if cmd_id is not None:
+                    if is_pinned:   pinned.append(cmd_id)
+                    else:           history.append(cmd_id)
 
 
     def config(self):
@@ -108,19 +119,47 @@ class Command:
 
         self._process_command_log(ed)
 
-        if not history:     return
+        if not history  and  not pinned:     return
 
-        hcmds = list(reversed(history))
-        _cmd_names = filter(None, map(self._get_cmd_name, hcmds)) # get non-None names for history commands
-        # command name to left, command path (origin) - to right, + strip()
-        _cmd_names = list(name_to_dlg_item(name)  for name in _cmd_names)
-        res = dlg_menu(DMENU_LIST, _cmd_names, caption=_('Commands history'))
+        dlg_items = []
+        ind_to_cmd = {}
+        n_pinned = 0
+        for i,cmd_id in enumerate(pinned+list(reversed(history))):
+            is_pinned = i < len(pinned)
+            cmd_name = self._get_cmd_name(cmd_id)
+            if not cmd_name:    continue
+
+            prefix = ''
+            if is_pinned:
+                n_pinned += 1
+                prefix = '*{}. '.format(len(dlg_items) + 1)
+
+            dlg_items.append(prefix + name_to_dlg_item(cmd_name))
+            ind_to_cmd[len(dlg_items) - 1] = cmd_id
+
+        _focused = n_pinned  if history else  0     # select first not pinned
+        res = dlg_menu(DMENU_LIST, dlg_items, focused=_focused, caption=_('Commands history'))
+
+        # test pin/unpin
+
         if res is not None:
-            cmd_id = hcmds[res]
-            ed.cmd(cmd_id)
-            # move called command to bottom of history
-            del history[history.index(cmd_id)]
-            history.append(cmd_id)
+            cmd_id = ind_to_cmd[res]
+            # pin/unpin if Control held
+            if 'c' not in app_proc(PROC_GET_KEYSTATE, ""):
+                ed.cmd(cmd_id)
+                # move called command to bottom of history
+                if cmd_id in history:
+                    history.remove(cmd_id)
+                    history.append(cmd_id)
+            else:
+                if cmd_id in history:
+                    history.remove(cmd_id)
+                    pinned.append(cmd_id)
+                else:
+                    pinned.remove(cmd_id)
+                    history.insert(0, cmd_id)   # to the bottom of dialog list
+
+                self.show_history()
 
 
     def _on_timer(self, tag='', info=''):
@@ -232,8 +271,11 @@ class Command:
 
     def _save_history(self):
         if history:
-            _real_cmd_names = filter(None, map(self._get_cmd_name, history))
-            txt = '\n'.join(_real_cmd_names)
+            _p_real_cmd_names = filter(None, map(self._get_cmd_name, pinned))
+            _h_real_cmd_names = filter(None, map(self._get_cmd_name, history))
+            _ptxt = '\n'.join(PINNED_PREFIX+n for n in  _p_real_cmd_names)  # add pinned prefix
+            _htxt = '\n'.join(_h_real_cmd_names)
+            txt = '\n'.join([_ptxt, _htxt])
             if txt:
                 with open(fn_history, 'w') as f:
                     f.write(txt)
