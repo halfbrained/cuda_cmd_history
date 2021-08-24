@@ -8,7 +8,7 @@ api=1.0.408
 
 [item1]
 section=events
-events=on_start,on_exit,on_focus,on_close
+events=on_start,on_focus,on_close,on_exit
 
 [item2]
 section=commands

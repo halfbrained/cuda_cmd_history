@@ -1,2 +1,6 @@
 2021.08.13
++ add: support for dynamic commands (like ExtTools 'Tools' menu)
++ add: favorites - hold control while choosing history item
+
+2021.08.13
 init version
