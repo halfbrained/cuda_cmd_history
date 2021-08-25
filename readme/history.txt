@@ -1,4 +1,7 @@
 2021.08.13
++ add: option "include_hotkey_commands"
+
+2021.08.13
 + add: support for dynamic commands (like ExtTools 'Tools' menu)
 + add: favorites - hold control while choosing history item
 

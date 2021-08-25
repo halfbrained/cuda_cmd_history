@@ -18,9 +18,13 @@ PINNED_PREFIX = 'pinned:'
 INVOKE_PALETTE     = 'app_pal'
 INVOKE_MENU        = 'menu_main'
 INVOKE_MENU_API    = 'menu_api'
+INVOKE_KEY    = 'key'
 
 cmd_None = 99   # cudatext_cmd.py
 
+
+def bool_to_str(v): return '1' if v else '0'
+def str_to_bool(s): return s=='1'
 
 def _cleanup(f):
     """ cleanups Command._all_commands after function call """
@@ -62,6 +66,7 @@ class Command:
 
     def __init__(self):
         self._opt_history_size = None
+        self._opt_add_hotkeyed = None   # should add to history commands invoked via a hotkey
 
         self._history = None #[] # command codes|name  (new - last)
         self._pinned = None #[]  # ^
@@ -97,6 +102,13 @@ class Command:
             self._opt_history_size = int(ini_read(fn_config, CFG_SECTION, 'history_size', '24'))
         return self._opt_history_size
 
+    @property
+    def opt_add_hotkeyed(self):
+        if self._opt_add_hotkeyed is None:
+            _v = str_to_bool(ini_read(fn_config, CFG_SECTION, 'include_hotkey_commands', '0'))
+            self._opt_add_hotkeyed = _v
+        return self._opt_add_hotkeyed
+
     def all_commands(self):
         if self._all_commands is None:
             self._all_commands = app_proc(PROC_GET_COMMANDS, '')
@@ -125,7 +137,8 @@ class Command:
 
 
     def config(self):
-        ini_write(fn_config, CFG_SECTION, 'history_size', str(self.opt_history_size))
+        ini_write(fn_config, CFG_SECTION, 'history_size',            str(self.opt_history_size))
+        ini_write(fn_config, CFG_SECTION, 'include_hotkey_commands', bool_to_str(self.opt_add_hotkeyed))
         file_open(fn_config)
 
     # start immediately
@@ -233,7 +246,8 @@ class Command:
             if invoke == INVOKE_PALETTE:
                 if cmd_id == 1 or cmd_id == 2:
                     continue
-            elif invoke == INVOKE_MENU:
+            elif invoke == INVOKE_MENU  \
+                    or (self.opt_add_hotkeyed  and  invoke == INVOKE_KEY):
                 if cmd_id == 1:     # start of command -- find cmd_id by module,method
                     cmd_item = self._get_modmeth_cmd(cmd)
                 elif cmd_id == 2:   # end of command - ignore
