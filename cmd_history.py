@@ -323,8 +323,8 @@ class Command:
         pre_len = len(PREFIX)
 
         text = log_cmd['text']  # example:  "menuitem=&Tools>less;module=cudatext;func=...
-        pre_start = text.rindex(PREFIX)
-        mpath_end = text.index(';', pre_start+pre_len) if pre_start >= 0 else -1     # end of menu path
+        pre_start = text.rindex(PREFIX) if PREFIX in text else -1
+        mpath_end = text.index(';', pre_start+pre_len) if ';' in text and pre_start >= 0 else -1     # end of menu path
         if pre_start < 0  or  mpath_end < 0:
             pass;       LOG and print(f'NOTE: weird api-menu text: {log_cmd}')
             return
