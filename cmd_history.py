@@ -163,7 +163,7 @@ class Command:
     @_cleanup
     def show_history(self):
         def name_to_dlg_item(s): #SKIP
-            _spl = s.rsplit(':', 1)[::-1]
+            _spl = s.rsplit(': ', 1)[::-1]
             return '\t'.join( map(str.strip, _spl) )
 
         self._process_command_log(ed)
