@@ -1,3 +1,7 @@
+2022.10.27
+- fix: wrong display of Windows filenames in the menu
+- fix: crash on str operations
+
 2021.08.13
 + add: option "include_hotkey_commands"
 
